@@ -1,41 +1,41 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { ItemList } from './components/ItemList'
 import { ItemModel } from './types'
 import { DEFAULT_ITEMS } from './constants'
 
 function App() {
   const [items, setItems] = useState<ItemModel[]>(DEFAULT_ITEMS)
-  const [newItems, setNewItems] = useState<ItemModel[]>([])
+  const [fruits, setFruits] = useState<ItemModel[]>([])
+  const [vegetables, setVegetables] = useState<ItemModel[]>([])
+
   const timeoutRefs = useRef<Record<string, number>>({})
 
-  const fruits = useMemo(() => {
-    return newItems.filter(item => item.type === 'Fruit')
-  }, [newItems])
-  const vegetables = useMemo(() => {
-    return newItems.filter(item => item.type === 'Vegetable')
-  }, [newItems])
-
-  const returnValueToItem = (item: ItemModel) => {
-    setItems(prevItems => [...prevItems, item])
-    setNewItems(prevNewItems => prevNewItems.filter(e => e.name !== item.name))
-  }
-
-  const onMoveToNewItem = (item: ItemModel) => {
+  const moveItem = (item: ItemModel) => {
+    if (item.type === 'Fruit') {
+      setFruits([...fruits, item])
+    } else {
+      setVegetables([... vegetables, item])
+    }
     setItems(items.filter(e => e.name !== item.name))
-    setNewItems([...newItems, item])
 
     timeoutRefs.current[item.name] = setTimeout(() => {
-      returnValueToItem(item)
+      moveItemBack(item)
       delete timeoutRefs.current[item.name]
-    }, 5000)
+    }, 3000)
   }
 
-  const onMoveToItem = (item: ItemModel) => {
+  const moveItemBack = (item: ItemModel) => {
     if (timeoutRefs.current[item.name]) {
       clearTimeout(timeoutRefs.current[item.name])
       delete timeoutRefs.current[item.name]
     }
-    returnValueToItem(item)
+
+    if (item.type === 'Fruit') {
+      setFruits(fruits => fruits.filter(f => f.name !== item.name))
+    } else {
+      setVegetables(vegetables => vegetables.filter(v => v.name !== item.name))
+    }
+    setItems(items => [...items, item])
   }
 
   return (
@@ -47,7 +47,7 @@ function App() {
               <ItemList
                 key={item.name}
                 item={item}
-                onItemListClick={onMoveToNewItem}
+                onItemListClick={moveItem}
               />
             ))
           }
@@ -65,7 +65,7 @@ function App() {
                 <ItemList
                   key={item.name}
                   item={item}
-                  onItemListClick={onMoveToItem}
+                  onItemListClick={moveItemBack}
                 />
               ))
             }
@@ -84,7 +84,7 @@ function App() {
                 <ItemList
                   key={item.name}
                   item={item}
-                  onItemListClick={onMoveToItem}
+                  onItemListClick={moveItemBack}
                 />
               ))
             }
